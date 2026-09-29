@@ -1,0 +1,13 @@
+# Auto-detect text files and enforce LF line endings for consistent git diffs
+* text=auto eol=lf
+
+# GitHub Linguist Language Override Specifications
+*.js linguist-language=JavaScript linguist-detectable=true
+*.html linguist-language=HTML linguist-detectable=true
+*.css linguist-language=CSS linguist-detectable=true
+
+# Mark documentation and generated metadata files to prevent stat skewing
+*.md linguist-documentation=true
+spec.md linguist-documentation=true
+package-lock.json linguist-vendored=true
+vercel.json linguist-documentation=true
