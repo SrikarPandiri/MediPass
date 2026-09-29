@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediPass | Dynamic Consent & Health Record System</title>
+  <meta name="description" content="Patient-Held, Consent-Driven Point-of-Care Health Record & Dynamic QR Access System" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- qrcode libraries & fallback renderer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="/js/qrRenderer.js"></script>
+  <!-- html5-qrcode camera scanner library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-slate-900">
+
+  <!-- TOP HEADER NAV BAR -->
+  <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-teal-400 p-0.5 shadow-lg shadow-cyan-500/20">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+            <i class="fa-solid fa-qrcode text-cyan-400 text-lg"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+            MediPass <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">PROTOTYPE</span>
+          </h1>
+          <p class="text-[10px] text-slate-400 font-medium">Consent-Driven Dynamic Point-of-Care Record System</p>
+        </div>
+      </div>
+
+      <!-- Center: Dual Portal Switcher Tabs -->
+      <div class="flex items-center p-1 rounded-2xl bg-slate-900 border border-slate-800 shadow-inner">
+        <button id="tab-patient-portal" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-user-shield mr-1.5"></i> Patient Portal
+        </button>
+        <button id="tab-doctor-portal" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <i class="fa-solid fa-stethoscope mr-1.5"></i> Doctor Point-of-Care
+        </button>
+      </div>
+
+      <!-- Right: Demo Patient Switcher & Offline Simulator -->
+      <div class="hidden lg:flex items-center gap-3 text-xs">
+        <!-- Demo Patient Account Dropdown -->
+        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5">
+          <i class="fa-solid fa-users text-cyan-400"></i>
+          <select id="demo-patient-select" class="bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer">
+            <!-- Populated dynamically by app.js -->
+          </select>
+        </div>
+
+        <!-- Simulated Offline Toggle -->
+        <label class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 cursor-pointer">
+          <input type="checkbox" id="sim-offline-toggle" class="sr-only peer" />
+          <div class="w-7 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500 relative"></div>
+          <span class="text-[11px] font-semibold text-slate-300">Offline Sim</span>
+        </label>
+
+        <!-- Network Status Badge -->
+        <div id="network-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> ONLINE & SYNCED
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- PORTAL 1: PATIENT PORTAL (Module A & G) -->
+    <!-- ========================================================================= -->
+    <section id="view-patient-portal" class="space-y-6 animate-fade-in">
+      
+      <!-- Patient Profile Header -->
+      <div id="patient-profile-header">
+        <!-- Rendered by patientPortal.js -->
+      </div>
+
+      <!-- Main 2-Column Grid: Left (Dynamic QR Code & Kill-Switch), Right (Health Records & Audit Log) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: Rolling QR Code Card & Scope Selector (4 Cols) -->
+        <div class="lg:col-span-4 space-y-5">
+
+          <div class="p-5 rounded-2xl glass-panel border border-slate-800 space-y-4 shadow-xl text-center">
+            
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrows-rotate text-cyan-400 animate-spin"></i> Dynamic 45s Rolling QR
+              </span>
+              <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                AES-256 JWT
+              </span>
+            </div>
+
+            <!-- QR Code Display Container -->
+            <div id="qr-code-wrapper" class="w-[250px] h-[250px] mx-auto p-2.5 rounded-2xl bg-white shadow-2xl shadow-cyan-500/10 border border-slate-200 flex items-center justify-center relative overflow-hidden">
+              <div id="qr-code-container" class="w-[230px] h-[230px] flex items-center justify-center">
+                <canvas id="qr-code-canvas" width="230" height="230" class="block mx-auto max-w-full max-h-full"></canvas>
+              </div>
+            </div>
+
+            <!-- 45-Second Countdown Progress Bar -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>Token Expiration:</span>
+                <span id="qr-timer-text" class="font-mono font-bold text-cyan-300">45s remaining</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div id="qr-timer-bar" class="h-2 rounded-full transition-all duration-1000 bg-cyan-400 w-full"></div>
+              </div>
+            </div>
+
+            <!-- Granular Scope Consent Selector Checkboxes -->
+            <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-left space-y-2">
+              <p class="text-xs font-bold text-slate-300">Select Scopes to Grant Doctor:</p>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                  <input type="checkbox" value="allergies" checked onchange="patientPortal.generateRollingQR()" class="scope-checkbox rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500" />
+                  <span>Allergies</span>
+                </label>
+                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                  <input type="checkbox" value="prescriptions" checked onchange="patientPortal.generateRollingQR()" class="scope-checkbox rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500" />
+                  <span>Prescriptions</span>
+                </label>
+                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                  <input type="checkbox" value="vitals" checked onchange="patientPortal.generateRollingQR()" class="scope-checkbox rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500" />
+                  <span>Vitals</span>
+                </label>
+                <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+                  <input type="checkbox" value="lab_results" onchange="patientPortal.generateRollingQR()" class="scope-checkbox rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-cyan-500" />
+                  <span>Lab Results</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- INSTANT LIVE REVOCATION KILL-SWITCH BUTTON (Module A & F) -->
+            <div class="pt-2">
+              <button id="kill-switch-btn" onclick="patientPortal.triggerInstantRevocation()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-power-off text-base"></i>
+                <span>INSTANT LIVE REVOCATION KILL-SWITCH</span>
+              </button>
+              <p class="text-[10px] text-slate-400 mt-1.5">Toggling immediately revokes access & locks active doctor screens.</p>
+            </div>
+
+            <!-- Raw Signed JWT String Preview -->
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-left">
+              <span class="text-[10px] font-mono text-slate-500 block mb-0.5">Raw Encrypted Token Payload (JWT):</span>
+              <p id="qr-raw-token" class="text-[10px] font-mono text-cyan-400/80 truncate">Generating...</p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Health Records & Audit Log Timeline (8 Cols) -->
+        <div class="lg:col-span-8 space-y-6">
+
+          <!-- Patient Medical Records Panel -->
+          <div class="p-5 rounded-2xl glass-panel border border-slate-800 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-file-medical text-cyan-400"></i> Encrypted Health Records & Prescriptions
+              </h3>
+              <button onclick="patientPortal.fetchPatientData()" class="text-xs text-cyan-400 hover:underline">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Refresh
+              </button>
+            </div>
+
+            <div id="patient-records-container" class="space-y-3">
+              <!-- Rendered by patientPortal.js -->
+            </div>
+          </div>
+
+          <!-- Real-Time Audit Log Timeline Panel -->
+          <div class="p-5 rounded-2xl glass-panel border border-slate-800 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Access Security Audit Log
+              </h3>
+              <span class="text-[10px] text-slate-400 font-mono">Immutable Log Stream</span>
+            </div>
+
+            <div id="audit-timeline-container" class="space-y-2.5">
+              <!-- Rendered by patientPortal.js -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- PORTAL 2: DOCTOR POINT-OF-CARE PORTAL (Modules B, D & E) -->
+    <!-- ========================================================================= -->
+    <section id="view-doctor-portal" class="space-y-6 hidden animate-fade-in">
+      
+      <!-- Doctor Clinician Header -->
+      <div id="doctor-profile-header">
+        <!-- Rendered by doctorPortal.js -->
+      </div>
+
+      <!-- Scanner Bar & Quick Controls -->
+      <div class="p-4 rounded-2xl glass-panel border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 text-lg">
+            <i class="fa-solid fa-camera font-bold"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-100 text-sm">Zero-Login Camera QR Scanner</h4>
+            <p class="text-xs text-slate-400">Scan patient MediPass QR code for instant &lt; 3.0s point-of-care history access</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full md:w-auto">
+          <!-- Camera Scan Trigger -->
+          <button onclick="doctorPortal.startCameraScanner()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>Open Camera Scanner</span>
+          </button>
+
+          <!-- Quick Demo Scan Button (Patient 1) -->
+          <button onclick="doctorPortal.quickDemoScan('pat_001')" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-semibold text-xs">
+            Quick Scan Demo Patient
+          </button>
+        </div>
+      </div>
+
+      <!-- Camera Scanner Frame Container (Hidden by default until opened) -->
+      <div id="qr-reader" class="hidden p-4 rounded-2xl bg-slate-900 border border-cyan-500/40 max-w-md mx-auto shadow-2xl"></div>
+
+      <!-- Point-of-Care Patient Medical History Viewer & Post-Consultation Entry -->
+      <div id="doctor-record-viewer">
+        <!-- Rendered by doctorPortal.js upon scanning QR code -->
+        <div class="p-12 text-center space-y-3 glass-panel rounded-2xl border border-dashed border-slate-800">
+          <i class="fa-solid fa-qrcode text-5xl text-slate-600"></i>
+          <h4 class="text-base font-bold text-slate-300">Ready to Scan Patient MediPass</h4>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">
+            Click "Open Camera Scanner" to scan via physical device camera, or use "Quick Scan Demo Patient" to verify instant JWT consent evaluation.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS FOR EMERGENCY PROTOCOLS & LINKING (Module D) -->
+  <!-- ========================================================================= -->
+
+  <!-- MODAL 1: BREAK-GLASS EMERGENCY OVERRIDE -->
+  <div id="break-glass-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 hidden">
+    <div class="w-full max-w-lg p-6 rounded-2xl bg-slate-900 border-2 border-red-600 shadow-2xl space-y-5 animate-fade-in">
+      <div class="flex items-center justify-between border-b border-red-800/60 pb-3">
+        <div class="flex items-center gap-2.5 text-red-400">
+          <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+          <h3 class="text-lg font-extrabold uppercase tracking-wide">Break-Glass Emergency Protocol</h3>
+        </div>
+        <button onclick="doctorPortal.closeBreakGlassModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-red-300/90 leading-relaxed">
+        <strong>WARNING:</strong> Break-Glass bypasses patient consent for life-threatening emergencies. This action creates an immutable security audit entry, dispatches an alert SMS to the patient, and grants a <strong>60-second restricted window</strong> (Blood Group + Severe Allergies).
+      </p>
+
+      <form onsubmit="doctorPortal.executeBreakGlassOverride(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Patient Identifier (Mobile Number or ABHA ID) *</label>
+          <input type="text" id="bg-identifier" required value="+919876543210" placeholder="+919876543210 or 12-3456-7890-1234" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-red-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Doctor Medical License Number *</label>
+          <input type="text" id="bg-license" required value="MED-884920" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-red-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Emergency Justification Reason (Mandatory for Audit) *</label>
+          <textarea id="bg-reason" required rows="2" placeholder="e.g. Unconscious trauma patient in ER; acute anaphylactic shock risk assessment required." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-red-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="doctorPortal.closeBreakGlassModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/40">
+            EXECUTE EMERGENCY OVERRIDE
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: JOHN DOE UNIDENTIFIED INTAKE -->
+  <div id="john-doe-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 hidden">
+    <div class="w-full max-w-lg p-6 rounded-2xl bg-slate-900 border border-purple-500 shadow-2xl space-y-5 animate-fade-in">
+      <div class="flex items-center justify-between border-b border-purple-800/60 pb-3">
+        <div class="flex items-center gap-2.5 text-purple-400">
+          <i class="fa-solid fa-user-ninja text-2xl"></i>
+          <h3 class="text-lg font-bold">John Doe Emergency Intake Chart</h3>
+        </div>
+        <button onclick="doctorPortal.closeJohnDoeModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-purple-200">
+        Creates a temporary emergency chart for an unidentified patient with zero phone or ID, supporting retroactive linking to a permanent profile once family arrives.
+      </p>
+
+      <form onsubmit="doctorPortal.executeJohnDoeIntake(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Initial Emergency Trauma Findings *</label>
+          <textarea id="jd-findings" required rows="2" placeholder="e.g. Unconscious individual brought by ER ambulance. Severe head lacerations." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-purple-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Estimated Age Group</label>
+            <select id="jd-age" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white">
+              <option value="Approx. 20-30 Yrs">Approx. 20-30 Yrs</option>
+              <option value="Approx. 35-45 Yrs" selected>Approx. 35-45 Yrs</option>
+              <option value="Approx. 50-60 Yrs">Approx. 50-60 Yrs</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Gender</label>
+            <select id="jd-gender" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white">
+              <option value="Male" selected>Male</option>
+              <option value="Female">Female</option>
+              <option value="Unspecified">Unspecified</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="doctorPortal.closeJohnDoeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/40">
+            Create Temporary Chart
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: RETROACTIVE LINKING MODAL -->
+  <div id="link-john-doe-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 hidden">
+    <div class="w-full max-w-lg p-6 rounded-2xl bg-slate-900 border border-teal-500 shadow-2xl space-y-5 animate-fade-in">
+      <div class="flex items-center justify-between border-b border-teal-800/60 pb-3">
+        <div class="flex items-center gap-2.5 text-teal-400">
+          <i class="fa-solid fa-link text-2xl"></i>
+          <h3 class="text-lg font-bold">Retroactive Patient Profile Linking</h3>
+        </div>
+        <button onclick="doctorPortal.closeLinkJohnDoeModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Link emergency intake findings to verified patient's permanent record.
+      </p>
+
+      <form onsubmit="doctorPortal.executeRetroactiveLink(event)" class="space-y-4">
+        <input type="hidden" id="link-john-doe-id" />
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Target Patient Phone or ABHA ID *</label>
+          <input type="text" id="link-target-phone" required value="+919876543210" placeholder="+919876543210 or 12-3456-7890-1234" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-teal-500 focus:outline-none" />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="doctorPortal.closeLinkJohnDoeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-teal-500/30">
+            Link & Merge Emergency Records
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- APPLICATION JAVASCRIPT SCRIPTS -->
+  <script src="/js/offlineMesh.js"></script>
+  <script src="/js/wsClient.js"></script>
+  <script src="/js/patientPortal.js"></script>
+  <script src="/js/doctorPortal.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

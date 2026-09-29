@@ -1,0 +1,102 @@
+/* MediPass Custom Aesthetic Styles & Accessibility Overrides */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #090d16;
+  color: #f1f5f9;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4;
+}
+
+/* Glassmorphism Card Style */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ELDERLY ACCESSIBILITY MODE OVERRIDES (Module G) */
+body.elderly-mode {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-size: 115% !important;
+}
+
+body.elderly-mode * {
+  border-color: #fbbf24 !important; /* High contrast yellow borders */
+}
+
+body.elderly-mode button {
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+}
+
+body.elderly-mode .glass-panel,
+body.elderly-mode div {
+  background-color: #111827 !important;
+}
+
+body.elderly-mode h1,
+body.elderly-mode h2,
+body.elderly-mode h3,
+body.elderly-mode h4 {
+  font-size: 1.4rem !important;
+  color: #fbbf24 !important;
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+/* QR Scanner Box Customization */
+#qr-reader {
+  border: none !important;
+}
+
+#qr-reader__scan_region {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 2px solid #06b6d4 !important;
+}
+
+#qr-reader button {
+  background-color: #0f172a !important;
+  color: #38bdf8 !important;
+  border: 1px solid #0284c7 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
